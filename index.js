@@ -1,6 +1,45 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 8000;
+const { MongoClient, ServerApiVersion } = require('mongodb');
+
+const client = new MongoClient(process.env.DB_URI, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
+});
+
+async function run() {
+  try {
+    await client.connect();
+    await client.db('admin').command({ ping: 1 });
+
+    const database = client.db('Wanderlust');
+    const userCollection = database.collection('data');
+
+    app.get('/featured', async (req, res) => {
+      const cursor = userCollection.find();
+      const data = await cursor.toArray();
+
+      res.send({
+        massage: 'successfully data get',
+        ok: true,
+        allWanderlustData: data,
+      });
+    });
+
+    console.log(
+      'Pinged your deployment. You successfully connected to MongoDB!',
+    );
+  } finally {
+    // await client.close();
+  }
+}
+run().catch(console.dir);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
