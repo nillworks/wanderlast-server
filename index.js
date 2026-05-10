@@ -4,7 +4,7 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 8000;
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 app.use(express.json());
 app.use(cors());
@@ -25,6 +25,7 @@ async function run() {
     const database = client.db('Wanderlust');
     const userCollection = database.collection('data');
 
+    // Get Data
     app.get('/featured', async (req, res) => {
       const cursor = userCollection.find();
       const data = await cursor.toArray();
@@ -41,6 +42,17 @@ async function run() {
       const newFeaturedData = req.body;
       const result = await userCollection.insertOne(newFeaturedData);
       res.send(result);
+    });
+
+    // Details Data
+    app.get('/featured/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        _id: new ObjectId(id),
+      };
+
+      const detailsSend = await userCollection.findOne(query);
+      res.send(detailsSend);
     });
 
     console.log(
