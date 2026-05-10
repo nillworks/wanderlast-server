@@ -3,7 +3,11 @@ require('dotenv').config();
 const express = require('express');
 const app = express();
 const port = process.env.PORT || 8000;
+const cors = require('cors');
 const { MongoClient, ServerApiVersion } = require('mongodb');
+
+app.use(express.json());
+app.use(cors());
 
 const client = new MongoClient(process.env.DB_URI, {
   serverApi: {
@@ -30,6 +34,13 @@ async function run() {
         ok: true,
         allWanderlustData: data,
       });
+    });
+
+    // Data Post
+    app.post('/featured', async (req, res) => {
+      const newFeaturedData = req.body;
+      const result = await userCollection.insertOne(newFeaturedData);
+      res.send(result);
     });
 
     console.log(
