@@ -23,11 +23,11 @@ async function run() {
     await client.db('admin').command({ ping: 1 });
 
     const database = client.db('Wanderlust');
-    const userCollection = database.collection('data');
+    const DestinationsDataCollection = database.collection('data');
 
     // Get Data
     app.get('/featured', async (req, res) => {
-      const cursor = userCollection.find();
+      const cursor = DestinationsDataCollection.find();
       const data = await cursor.toArray();
 
       res.send({
@@ -40,7 +40,8 @@ async function run() {
     // Data Post
     app.post('/featured', async (req, res) => {
       const newFeaturedData = req.body;
-      const result = await userCollection.insertOne(newFeaturedData);
+      const result =
+        await DestinationsDataCollection.insertOne(newFeaturedData);
       res.send(result);
     });
 
@@ -51,8 +52,46 @@ async function run() {
         _id: new ObjectId(id),
       };
 
-      const detailsSend = await userCollection.findOne(query);
+      const detailsSend = await DestinationsDataCollection.findOne(query);
       res.send(detailsSend);
+    });
+
+    // Patch
+    app.patch('/featured/:id', async (req, res) => {
+      const id = req.params.id;
+      const filterId = {
+        _id: new ObjectId(id),
+      };
+
+      const updateFeatured = req.body;
+      const updateDocument = {
+        $set: {
+          destinationName: updateFeatured.destinationName,
+          country: updateFeatured.country,
+          category: updateFeatured.category,
+          price: updateFeatured.price,
+          duration: updateFeatured.duration,
+          departureDate: updateFeatured.departureDate,
+          imageUrl: updateFeatured.imageUrl,
+          description: updateFeatured.description,
+        },
+      };
+
+      const result = await DestinationsDataCollection.updateOne(
+        filterId,
+        updateDocument,
+      );
+      res.send(result);
+    });
+
+    // Delete
+
+    app.delete('/featured/:id', async (req, res) => {
+      const id = req.params.id;
+      const deleteOne = await DestinationsDataCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(deleteOne);
     });
 
     console.log(
