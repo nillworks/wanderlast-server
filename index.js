@@ -24,6 +24,7 @@ async function run() {
 
     const database = client.db('Wanderlust');
     const DestinationsDataCollection = database.collection('data');
+    const bookingCollection = database.collection('bookingData');
 
     // Get Data
     app.get('/featured', async (req, res) => {
@@ -46,15 +47,30 @@ async function run() {
     });
 
     // Details Data
-    app.get('/featured/:id', async (req, res) => {
-      const id = req.params.id;
-      const query = {
-        _id: new ObjectId(id),
-      };
+    app.get(
+      '/featured/:id',
+      (req, res, next) => {
+        const header = req.headers.authorization;
 
-      const detailsSend = await DestinationsDataCollection.findOne(query);
-      res.send(detailsSend);
-    });
+        if (header === 'logged in') {
+          console.log(header);
+          next();
+        } else {
+          res.status(401).json({
+            message: 'Unauthorized Access',
+          });
+        }
+      },
+      async (req, res) => {
+        const id = req.params.id;
+        const query = {
+          _id: new ObjectId(id),
+        };
+
+        const detailsSend = await DestinationsDataCollection.findOne(query);
+        res.send(detailsSend);
+      },
+    );
 
     // Patch
     app.patch('/featured/:id', async (req, res) => {
@@ -85,13 +101,37 @@ async function run() {
     });
 
     // Delete
-
     app.delete('/featured/:id', async (req, res) => {
       const id = req.params.id;
       const deleteOne = await DestinationsDataCollection.deleteOne({
         _id: new ObjectId(id),
       });
       res.send(deleteOne);
+    });
+
+    // Booking Information Data DB
+    app.get('/booking', async (req, res) => {
+      const cursor = bookingCollection.find();
+      const result = await cursor.toArray();
+      res.send({
+        massage: 'successfully Booking Data get',
+        ok: true,
+        allBookingData: result,
+      });
+    });
+
+    app.post('/booking', async (req, res) => {
+      const newBooking = req.body;
+      const result = await bookingCollection.insertOne(newBooking);
+      res.send(result);
+    });
+
+    app.delete('/booking/:id', async (req, res) => {
+      const id = req.params.id;
+      const deleteBooking = await bookingCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.send(deleteBooking);
     });
 
     console.log(
