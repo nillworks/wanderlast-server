@@ -149,9 +149,43 @@ async function run() {
     });
 
     app.post('/booking', verifyToken, async (req, res) => {
-      const newBooking = req.body;
-      const result = await bookingCollection.insertOne(newBooking);
-      res.send(result);
+      try {
+        const newBooking = req.body;
+        const userId = newBooking.userId;
+
+        if (!userId) {
+          return res.status(400).send({ message: 'User ID is required' });
+        }
+
+        // 1. check existing booking
+        const existingBooking = await bookingCollection.findOne({
+          userId: userId,
+        });
+
+        // 2. if already booked (not cancelled)
+        if (existingBooking) {
+          return res.status(400).send({
+            message:
+              'You already have an active booking. Please cancel it before making a new one',
+          });
+        }
+
+        // 3. insert new booking
+        const result = await bookingCollection.insertOne({
+          ...newBooking,
+        });
+
+        res.send({
+          success: true,
+          message: 'Booking successful',
+          data: result,
+        });
+      } catch (error) {
+        res.status(500).send({
+          message: 'Server error',
+          error: error.message,
+        });
+      }
     });
 
     app.delete('/booking/:id', async (req, res) => {
