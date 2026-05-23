@@ -87,7 +87,7 @@ async function run() {
     app.patch('/featured/:id', async (req, res) => {
       const id = req.params.id;
       const filterId = {
-        _id: new ObjectId(id),
+        UserId: id,
       };
 
       const updateFeatured = req.body;
@@ -103,6 +103,8 @@ async function run() {
           description: updateFeatured.description,
         },
       };
+
+      console.log(updateDocument);
 
       const result = await DestinationsDataCollection.updateOne(
         filterId,
@@ -120,9 +122,24 @@ async function run() {
       res.send(deleteOne);
     });
 
+    // Your Add Destination List api
+    app.get('/userAddDestinationList/:id', async (req, res) => {
+      const userId = req.params.id;
+
+      const cursor = DestinationsDataCollection.find({ UserId: userId });
+      const result = await cursor.toArray();
+      res.send({
+        massage: 'successfully Your Add Destination List get',
+        ok: true,
+        allDestinationList: result,
+      });
+    });
+
     // Booking Information Data DB
-    app.get('/booking', verifyToken, async (req, res) => {
-      const cursor = bookingCollection.find();
+    app.get('/booking/:id', verifyToken, async (req, res) => {
+      const userId = req.params.id;
+
+      const cursor = bookingCollection.find({ userId: userId });
       const result = await cursor.toArray();
       res.send({
         massage: 'successfully Booking Data get',
